@@ -2,7 +2,9 @@ import type { Metadata } from "next";
 import localFont from "next/font/local";
 import { Cormorant_Garamond } from "next/font/google";
 import "./globals.css";
+import { LocaleProvider } from "@/components/locale-provider";
 import { SiteHeader } from "@/components/site-header";
+import { getLocale } from "@/lib/i18n/server";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -33,17 +35,20 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const locale = getLocale();
   return (
     <html
-      lang="en"
+      lang={locale === "zh-Hant" ? "zh-Hant" : "en"}
       className={`${geistSans.variable} ${geistMono.variable} ${display.variable} dark`}
     >
       <body className="min-h-screen bg-background font-sans text-foreground antialiased">
         <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(ellipse_at_top,oklch(0.28_0.04_85/0.35),transparent_55%)]" />
-        <div className="relative">
-          <SiteHeader />
-          {children}
-        </div>
+        <LocaleProvider initial={locale}>
+          <div className="relative">
+            <SiteHeader />
+            {children}
+          </div>
+        </LocaleProvider>
       </body>
     </html>
   );

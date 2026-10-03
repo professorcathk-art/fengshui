@@ -30,6 +30,7 @@ export async function POST(request: Request) {
     year,
     dob: session.metadata?.dob,
     gender: session.metadata?.gender,
+    locale: session.metadata?.locale,
   });
 
   await unlockStoredReport({

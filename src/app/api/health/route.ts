@@ -23,6 +23,7 @@ export function GET() {
     supabaseConfigured: isSupabaseConfigured(),
     deepseekConfigured: Boolean(process.env.DEEPSEEK_API_KEY),
     stripeConfigured: Boolean(process.env.STRIPE_SECRET_KEY),
+    paywallBypass: !process.env.STRIPE_SECRET_KEY,
     supabaseSecretConfigured: Boolean(process.env.SUPABASE_SECRET_KEY),
   });
 }

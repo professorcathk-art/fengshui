@@ -3,13 +3,16 @@ import { flyingStar, type FlyingStarChart } from "@/lib/fengshui/flying-star";
 import { lifeGua, type Gender, type LifeGua } from "@/lib/fengshui/kua";
 import { periodFromYear } from "@/lib/fengshui/period";
 import { remedyText } from "@/lib/fengshui/remedies";
+import type { Locale } from "@/lib/i18n/dictionary";
 
 export function paidReading(input: {
   facing: number;
   year: number;
   dob?: string;
   gender?: string;
+  locale?: string;
 }) {
+  const locale: Locale = input.locale === "zh-Hant" ? "zh-Hant" : "en";
   const chart = flyingStar({
     period: periodFromYear(input.year),
     facingDegree: input.facing,
@@ -18,7 +21,7 @@ export function paidReading(input: {
     input.dob && (input.gender === "female" || input.gender === "male")
       ? lifeGua(input.dob, input.gender as Gender)
       : null;
-  return { chart, gua, remedy: remedyText(chart, gua) };
+  return { chart, gua, remedy: remedyText(chart, gua, locale) };
 }
 
 export async function unlockStoredReport(input: {

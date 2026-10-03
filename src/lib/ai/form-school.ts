@@ -23,14 +23,20 @@ export async function analyzeFormSchool(input: {
   address?: string;
   facingDegree: number;
   yearBuilt: number;
+  locale?: "en" | "zh-Hant";
 }): Promise<FormSchool> {
   const label = LABELS[input.auditType];
+  const language =
+    input.locale === "zh-Hant"
+      ? "Write every string in identified_features and negative_energies in Traditional Chinese."
+      : "Write every string in identified_features and negative_energies in English.";
   const system = `Act as a Master of Traditional Chinese Feng Shui (Form School). Analyze this ${label}.
 
 Identify the location of the main door, windows, bed/desk.
 Look for external 'Sha Qi' (Poison Arrows) such as T-junctions, sharp corners, or highway curves.
 Look for internal 'Sha Qi' such as exposed ceiling beams, doors facing doors, or center staircases.
-Output strictly in JSON format containing: identified_features (list), negative_energies (list), structural_score (1-100).`;
+Output strictly in JSON format containing: identified_features (list), negative_energies (list), structural_score (1-100).
+Keep the JSON keys in English. ${language}`;
 
   const userText = [
     `Audit type: ${label}.`,

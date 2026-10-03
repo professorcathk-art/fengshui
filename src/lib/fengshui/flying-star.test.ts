@@ -3,6 +3,7 @@ import test from "node:test";
 import { flyingStar } from "./flying-star";
 import { lifeGua } from "./kua";
 import { periodFromYear } from "./period";
+import { remedyText } from "./remedies";
 
 test("period years follow the 20-year cycles", () => {
   assert.equal(periodFromYear(1943), 4);
@@ -30,6 +31,13 @@ test("period 8 facing due south is the published double-facing chart", () => {
     [south?.mountain, south?.period, south?.water],
     [8, 3, 8],
   );
+});
+
+test("traditional Chinese remedies name the five yellow star", () => {
+  const chart = flyingStar({ period: 8, facingDegree: 180 });
+  const text = remedyText(chart, null, "zh-Hant");
+  assert.match(text, /五黃/);
+  assert.doesNotMatch(text, /\$/);
 });
 
 test("life gua uses the 4 February year boundary", () => {

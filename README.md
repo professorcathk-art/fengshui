@@ -18,6 +18,10 @@ Copy `.env.example` to `.env.local` for local work. In Vercel, set the same name
 - `STRIPE_SECRET_KEY`
 - `STRIPE_WEBHOOK_SECRET`
 
-The publishable Supabase key and the DeepSeek key are enough for the free audit. Stripe and the Supabase secret key are required before a payment can unlock a saved chart.
+The publishable Supabase key and the DeepSeek key are enough for the free audit. While `STRIPE_SECRET_KEY` is empty, Unlock opens the Flying Star chart without charging so the flow can be tested. After that key is set, the same button starts Stripe Checkout for $19.90.
+
+The site language is English or Traditional Chinese, stored in the `geomancy-locale` cookie. The audit form also has its own choice for the language of the result. Case studies live at `/cases`.
+
+The Supabase secret key is required before a paid chart can be written back onto a saved report.
 
 Run `supabase/migrations` in the Supabase SQL editor, in filename order, before signed-in reports can be stored.

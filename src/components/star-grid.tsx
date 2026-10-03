@@ -1,6 +1,6 @@
+import { kindLabel, palaceName, type Locale } from "@/lib/i18n/dictionary";
 import { cn } from "@/lib/utils";
 import {
-  CHART_KIND_LABEL,
   STAR_NAMES,
   type FlyingStarChart,
   type PalaceId,
@@ -12,19 +12,31 @@ const ROWS: PalaceId[][] = [
   ["SW", "S", "SE"],
 ];
 
-export function StarGrid({ chart }: { chart: FlyingStarChart }) {
+export function StarGrid({
+  chart,
+  locale = "en",
+}: {
+  chart: FlyingStarChart;
+  locale?: Locale;
+}) {
   const byId = new Map(chart.palaces.map((palace) => [palace.id, palace]));
+  const names = palaceName[locale];
+  const kind = kindLabel[locale][chart.kind] ?? chart.kind;
 
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <p className="text-xs tracking-[0.18em] text-gold uppercase">Xuan Kong</p>
+          <p className="text-xs tracking-[0.18em] text-gold uppercase">
+            {locale === "zh-Hant" ? "玄空" : "Xuan Kong"}
+          </p>
           <h3 className="font-display text-3xl text-foreground">
-            Period {chart.period} · {chart.facing.pinyin} {chart.facing.character} facing
+            {locale === "zh-Hant"
+              ? `${chart.period} 運 · 向 ${chart.facing.pinyin} ${chart.facing.character}`
+              : `Period ${chart.period} · ${chart.facing.pinyin} ${chart.facing.character} facing`}
           </h3>
         </div>
-        <p className="max-w-sm text-sm text-muted-foreground">{CHART_KIND_LABEL[chart.kind]}</p>
+        <p className="max-w-sm text-sm text-muted-foreground">{kind}</p>
       </div>
       <div className="grid grid-cols-3 gap-2">
         {ROWS.flat().map((id) => {
@@ -39,7 +51,7 @@ export function StarGrid({ chart }: { chart: FlyingStarChart }) {
               )}
             >
               <p className="text-[11px] tracking-wide text-muted-foreground uppercase">
-                {palace.direction}
+                {names[id]}
               </p>
               <p className="mt-2 font-display text-2xl leading-none">
                 {palace.mountain}
@@ -56,10 +68,9 @@ export function StarGrid({ chart }: { chart: FlyingStarChart }) {
         })}
       </div>
       <p className="text-xs text-muted-foreground">
-        Each palace reads mountain star, period star, water star. North is at the top.
-        Sitting {chart.sitting.pinyin} {chart.sitting.character}. Mountain stars fly{" "}
-        {chart.mountainFliesForward ? "forward" : "backward"}; water stars fly{" "}
-        {chart.waterFliesForward ? "forward" : "backward"}.
+        {locale === "zh-Hant"
+          ? `每宮依次是山星、運星、向星。北在上方。坐 ${chart.sitting.pinyin} ${chart.sitting.character}。山星${chart.mountainFliesForward ? "順" : "逆"}飛，向星${chart.waterFliesForward ? "順" : "逆"}飛。`
+          : `Each palace reads mountain star, period star, water star. North is at the top. Sitting ${chart.sitting.pinyin} ${chart.sitting.character}. Mountain stars fly ${chart.mountainFliesForward ? "forward" : "backward"}; water stars fly ${chart.waterFliesForward ? "forward" : "backward"}.`}
       </p>
     </div>
   );

@@ -19,6 +19,7 @@ type Body = {
   gender?: Gender;
   address?: string;
   imageDataUrl?: string;
+  resultLocale?: "en" | "zh-Hant";
 };
 
 function limited(ip: string) {
@@ -76,6 +77,15 @@ export async function POST(request: Request) {
     let imageDataUrl = body.imageDataUrl;
     let addressLabel = body.address?.trim();
 
+    const resultLocale = body.resultLocale === "zh-Hant" ? "zh-Hant" : "en";
+
+    if (auditType === "floorplan" && (!addressLabel || addressLabel.length < 4)) {
+      return NextResponse.json(
+        { error: "A floor plan also needs the street address of the building." },
+        { status: 400 },
+      );
+    }
+
     if (auditType === "map") {
       if (!addressLabel) {
         return NextResponse.json({ error: "Enter an address for the satellite audit." }, { status: 400 });
@@ -97,6 +107,7 @@ export async function POST(request: Request) {
       address: addressLabel,
       facingDegree,
       yearBuilt,
+      locale: resultLocale,
     });
 
     const saved = await persistAudit({
@@ -121,6 +132,7 @@ export async function POST(request: Request) {
       auditId: saved.auditId,
       reportId: saved.reportId,
       saveError: saved.saveError,
+      resultLocale,
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : "The audit failed.";

@@ -3,27 +3,83 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { useLocale } from "@/components/locale-provider";
+import type { Locale } from "@/lib/i18n/dictionary";
 
 type AuditType = "floorplan" | "room" | "map";
 type Gender = "female" | "male";
 
-const TYPES: { id: AuditType; title: string; copy: string }[] = [
-  {
-    id: "floorplan",
-    title: "Floor plan",
-    copy: "A drawn plan with the front door visible.",
+const COPY = {
+  en: {
+    types: [
+      { id: "floorplan" as const, title: "Floor plan", copy: "A drawn plan, plus the street address of the building." },
+      { id: "room" as const, title: "Room photo", copy: "The bed, desk, door, and ceiling in one frame." },
+      { id: "map" as const, title: "Address", copy: "A satellite view of the building and the roads around it." },
+    ],
+    headings: ["What are we reading?", "The picture", "The compass", "The resident"],
+    image: "Use a JPEG, PNG, or WebP image.",
+    addressError: "Enter a street address or landmark.",
+    planAddressError: "A floor plan also needs the building address.",
+    imageError: "Upload an image to continue.",
+    guaError: "Life Gua needs both a birth date and sex.",
+    scanning: "Reading the form",
+    scanningBody: "Form School is looking for the door, the bed, and any poison arrows.",
+    addressLabel: "Address or landmark",
+    planAddress: "Building address",
+    choose: "Choose an image",
+    formats: "JPEG, PNG, or WebP",
+    facing: "Facing, looking out the front door",
+    year: "Year built",
+    compassHelp:
+      "The top of the picture is the front of the building. North stays fixed. Turning the degree turns that front on the compass.",
+    needle: "No picture yet. The needle is the front of the building.",
+    resultLanguage: "Language of the audit result",
+    dob: "Date of birth, optional",
+    female: "Female",
+    male: "Male",
+    resident:
+      "Life Gua uses the BaZi year, which turns on about 4 February. Sex is required because the male and female counts run in opposite directions. Skip both fields if you only want the building chart.",
+    back: "Back",
+    continue: "Continue",
+    run: "Run the audit",
+    step: "Step",
+    of: "of",
   },
-  {
-    id: "room",
-    title: "Room photo",
-    copy: "The bed, desk, door, and ceiling in one frame.",
+  "zh-Hant": {
+    types: [
+      { id: "floorplan" as const, title: "平面圖", copy: "一張畫好的平面，加上這棟建築的街道地址。" },
+      { id: "room" as const, title: "房間照片", copy: "同一張照片裡要看得到床、桌、門和天花。" },
+      { id: "map" as const, title: "地址", copy: "用衛星圖看建築和周圍的道路。" },
+    ],
+    headings: ["要讀什麼？", "圖像", "方位", "居住者"],
+    image: "請用 JPEG、PNG 或 WebP。",
+    addressError: "請填街道地址或地標。",
+    planAddressError: "平面圖也要填這棟建築的地址。",
+    imageError: "請先上傳圖片。",
+    guaError: "命卦需要出生日期和性別。",
+    scanning: "正在讀形",
+    scanningBody: "巒頭正在找門、床，以及尖角煞。",
+    addressLabel: "地址或地標",
+    planAddress: "建築地址",
+    choose: "選擇圖片",
+    formats: "JPEG、PNG 或 WebP",
+    facing: "向首，站在門外向外看",
+    year: "建成年份",
+    compassHelp: "圖片的上方是建築的正面。北方固定不動。轉動度數時，正面會在羅盤上跟著轉。",
+    needle: "還沒有圖片。指針代表建築的正面。",
+    resultLanguage: "審計結果的語言",
+    dob: "出生日期，可留空",
+    female: "女",
+    male: "男",
+    resident:
+      "命卦用八字年，大約在立春、2 月 4 日交年。男女算法相反，所以需要性別。如果只要建築的盤，兩項都可以留空。",
+    back: "返回",
+    continue: "繼續",
+    run: "開始審計",
+    step: "第",
+    of: "步，共",
   },
-  {
-    id: "map",
-    title: "Address",
-    copy: "A satellite view of the building and the roads around it.",
-  },
-];
+} as const;
 
 async function shrinkImage(file: File) {
   const bitmap = await createImageBitmap(file);
@@ -39,6 +95,8 @@ async function shrinkImage(file: File) {
 
 export function AuditWizard() {
   const router = useRouter();
+  const { locale } = useLocale();
+  const copy = COPY[locale];
   const [step, setStep] = useState(0);
   const [auditType, setAuditType] = useState<AuditType>("floorplan");
   const [address, setAddress] = useState("");
@@ -48,19 +106,17 @@ export function AuditWizard() {
   const [yearBuilt, setYearBuilt] = useState(2008);
   const [dob, setDob] = useState("");
   const [gender, setGender] = useState<Gender | "">("");
+  const [resultLocale, setResultLocale] = useState<Locale>(locale);
   const [error, setError] = useState<string | null>(null);
   const [scanning, setScanning] = useState(false);
 
-  const heading = useMemo(
-    () => ["What are we reading?", "The picture", "The compass", "The resident"][step],
-    [step],
-  );
+  const heading = useMemo(() => copy.headings[step], [copy.headings, step]);
 
   async function onFile(file: File | undefined) {
     if (!file) return;
     setError(null);
     if (!file.type.startsWith("image/")) {
-      setError("Use a JPEG, PNG, or WebP image.");
+      setError(copy.image);
       return;
     }
     const dataUrl = await shrinkImage(file);
@@ -70,16 +126,16 @@ export function AuditWizard() {
 
   function next() {
     setError(null);
-    if (step === 1 && auditType === "map" && address.trim().length < 4) {
-      setError("Enter a street address or landmark.");
+    if (step === 1 && (auditType === "map" || auditType === "floorplan") && address.trim().length < 4) {
+      setError(auditType === "floorplan" ? copy.planAddressError : copy.addressError);
       return;
     }
     if (step === 1 && auditType !== "map" && !imageDataUrl) {
-      setError("Upload an image to continue.");
+      setError(copy.imageError);
       return;
     }
     if (step === 3 && dob && !gender) {
-      setError("Life Gua needs both a birth date and sex.");
+      setError(copy.guaError);
       return;
     }
     setStep((value) => Math.min(3, value + 1));
@@ -88,7 +144,7 @@ export function AuditWizard() {
   async function submit() {
     setError(null);
     if (dob && !gender) {
-      setError("Life Gua needs both a birth date and sex.");
+      setError(copy.guaError);
       return;
     }
     setScanning(true);
@@ -102,13 +158,14 @@ export function AuditWizard() {
           yearBuilt,
           dob: dob || undefined,
           gender: gender || undefined,
-          address: auditType === "map" ? address : undefined,
+          address: auditType === "room" ? undefined : address,
           imageDataUrl: auditType === "map" ? undefined : imageDataUrl,
+          resultLocale,
         }),
       });
       const payload = (await response.json()) as { error?: string };
       if (!response.ok) throw new Error(payload.error || "The audit failed.");
-      sessionStorage.setItem("geomancy-report", JSON.stringify(payload));
+      sessionStorage.setItem("geomancy-report", JSON.stringify({ ...payload, resultLocale }));
       router.push("/report/preview");
     } catch (reason) {
       setScanning(false);
@@ -123,19 +180,19 @@ export function AuditWizard() {
           <div className="scan-frame relative h-40 w-40 rounded-full border border-gold/40">
             <div className="scan-line absolute inset-x-4 h-px bg-gold" />
           </div>
-          <p className="mt-6 font-display text-3xl">Reading the form</p>
-          <p className="mt-2 max-w-sm text-center text-sm text-muted-foreground">
-            Form School is looking for the door, the bed, and any poison arrows.
-          </p>
+          <p className="mt-6 font-display text-3xl">{copy.scanning}</p>
+          <p className="mt-2 max-w-sm text-center text-sm text-muted-foreground">{copy.scanningBody}</p>
         </div>
       ) : null}
 
-      <p className="text-xs tracking-[0.18em] text-gold uppercase">Step {step + 1} of 4</p>
+      <p className="text-xs tracking-[0.18em] text-gold uppercase">
+        {locale === "zh-Hant" ? `${copy.step} ${step + 1} ${copy.of} 4` : `${copy.step} ${step + 1} ${copy.of} 4`}
+      </p>
       <h1 className="mt-2 font-display text-4xl">{heading}</h1>
 
       {step === 0 ? (
         <div className="mt-6 grid gap-3">
-          {TYPES.map((type) => (
+          {copy.types.map((type) => (
             <button
               key={type.id}
               className={`rounded-xl border px-4 py-4 text-left ${
@@ -148,12 +205,29 @@ export function AuditWizard() {
               <span className="mt-1 block text-sm text-muted-foreground">{type.copy}</span>
             </button>
           ))}
+          <div className="pt-2">
+            <p className="text-sm text-muted-foreground">{copy.resultLanguage}</p>
+            <div className="mt-2 flex gap-2">
+              <Button type="button" variant={resultLocale === "en" ? "default" : "outline"} onClick={() => setResultLocale("en")}>
+                English
+              </Button>
+              <Button
+                type="button"
+                variant={resultLocale === "zh-Hant" ? "default" : "outline"}
+                onClick={() => setResultLocale("zh-Hant")}
+              >
+                繁體中文
+              </Button>
+            </div>
+          </div>
         </div>
       ) : null}
 
-      {step === 1 && auditType === "map" ? (
+      {step === 1 && (auditType === "map" || auditType === "floorplan") ? (
         <label className="mt-6 block space-y-2 text-sm">
-          <span className="text-muted-foreground">Address or landmark</span>
+          <span className="text-muted-foreground">
+            {auditType === "floorplan" ? copy.planAddress : copy.addressLabel}
+          </span>
           <input
             value={address}
             onChange={(event) => setAddress(event.target.value)}
@@ -165,8 +239,8 @@ export function AuditWizard() {
 
       {step === 1 && auditType !== "map" ? (
         <label className="mt-6 flex cursor-pointer flex-col items-center justify-center rounded-xl border border-dashed border-border px-6 py-12 text-center">
-          <span>{fileName ?? "Choose an image"}</span>
-          <span className="mt-2 text-sm text-muted-foreground">JPEG, PNG, or WebP</span>
+          <span>{fileName ?? copy.choose}</span>
+          <span className="mt-2 text-sm text-muted-foreground">{copy.formats}</span>
           <input
             accept="image/jpeg,image/png,image/webp"
             className="sr-only"
@@ -178,9 +252,34 @@ export function AuditWizard() {
 
       {step === 2 ? (
         <div className="mt-6 space-y-6">
+          <div className="relative mx-auto h-72 w-72">
+            <div className="absolute inset-0 rounded-full border border-gold/40" />
+            <span className="absolute top-2 left-1/2 -translate-x-1/2 text-xs text-gold">N</span>
+            <span className="absolute top-1/2 right-2 -translate-y-1/2 text-xs text-muted-foreground">E</span>
+            <span className="absolute bottom-2 left-1/2 -translate-x-1/2 text-xs text-muted-foreground">S</span>
+            <span className="absolute top-1/2 left-2 -translate-y-1/2 text-xs text-muted-foreground">W</span>
+            {imageDataUrl ? (
+              // The uploaded plan is the user's own file, shown only on this step.
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                alt=""
+                src={imageDataUrl}
+                style={{ transform: `rotate(${facing}deg)` }}
+                className="absolute inset-10 h-[calc(100%-5rem)] w-[calc(100%-5rem)] object-contain transition-transform duration-300"
+              />
+            ) : (
+              <div
+                className="absolute inset-10 transition-transform duration-300"
+                style={{ transform: `rotate(${facing}deg)` }}
+              >
+                <div className="absolute top-0 left-1/2 h-1/2 w-px -translate-x-1/2 bg-gold" />
+                <div className="absolute top-0 left-1/2 h-3 w-3 -translate-x-1/2 rounded-full bg-gold" />
+              </div>
+            )}
+          </div>
           <label className="block space-y-3 text-sm">
             <span className="flex justify-between text-muted-foreground">
-              Facing, looking out the front door
+              {copy.facing}
               <span className="text-foreground">{facing}°</span>
             </span>
             <input
@@ -210,7 +309,7 @@ export function AuditWizard() {
             ))}
           </div>
           <label className="block space-y-2 text-sm">
-            <span className="text-muted-foreground">Year built</span>
+            <span className="text-muted-foreground">{copy.year}</span>
             <input
               type="number"
               min={1600}
@@ -220,17 +319,15 @@ export function AuditWizard() {
               className="h-11 w-full rounded-lg border border-input bg-background px-3 outline-none"
             />
           </label>
-          <p className="text-sm text-muted-foreground">
-            Stand outside the front door and read the heading while looking away from the building.
-            The year sets the Period, the twenty-year cycle of the Flying Star chart.
-          </p>
+          <p className="text-sm text-muted-foreground">{copy.compassHelp}</p>
+          {!imageDataUrl ? <p className="text-sm text-muted-foreground">{copy.needle}</p> : null}
         </div>
       ) : null}
 
       {step === 3 ? (
         <div className="mt-6 space-y-4">
           <label className="block space-y-2 text-sm">
-            <span className="text-muted-foreground">Date of birth, optional</span>
+            <span className="text-muted-foreground">{copy.dob}</span>
             <input
               type="date"
               value={dob}
@@ -246,15 +343,11 @@ export function AuditWizard() {
                 variant={gender === value ? "default" : "outline"}
                 onClick={() => setGender(value)}
               >
-                {value === "female" ? "Female" : "Male"}
+                {value === "female" ? copy.female : copy.male}
               </Button>
             ))}
           </div>
-          <p className="text-sm text-muted-foreground">
-            Life Gua uses the BaZi year, which turns on about 4 February. Sex is required because
-            the male and female counts run in opposite directions. Skip both fields if you only want
-            the building chart.
-          </p>
+          <p className="text-sm text-muted-foreground">{copy.resident}</p>
         </div>
       ) : null}
 
@@ -267,15 +360,15 @@ export function AuditWizard() {
           disabled={step === 0 || scanning}
           onClick={() => setStep((value) => Math.max(0, value - 1))}
         >
-          Back
+          {copy.back}
         </Button>
         {step < 3 ? (
           <Button type="button" onClick={next}>
-            Continue
+            {copy.continue}
           </Button>
         ) : (
           <Button type="button" onClick={() => void submit()}>
-            Run the audit
+            {copy.run}
           </Button>
         )}
       </div>

@@ -1,19 +1,12 @@
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
 import { REPORT_PRICE_CENTS, stripeSecret } from "@/lib/billing";
+import { paidReading, unlockStoredReport } from "@/lib/reports/unlock";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function POST(request: Request) {
-  const secret = stripeSecret();
-  if (!secret) {
-    return NextResponse.json(
-      { error: "Stripe is not configured yet. Add STRIPE_SECRET_KEY on the server." },
-      { status: 503 },
-    );
-  }
-
   const body = (await request.json()) as {
     facingDegree?: number;
     yearBuilt?: number;
@@ -21,12 +14,33 @@ export async function POST(request: Request) {
     gender?: string;
     auditType?: string;
     reportId?: string;
+    locale?: string;
   };
 
   const facing = Number(body.facingDegree);
   const year = Number(body.yearBuilt);
   if (!Number.isFinite(facing) || !Number.isInteger(year)) {
     return NextResponse.json({ error: "This report is missing its compass data." }, { status: 400 });
+  }
+
+  const secret = stripeSecret();
+  if (!secret) {
+    const reading = paidReading({
+      facing,
+      year,
+      dob: body.dob,
+      gender: body.gender,
+      locale: body.locale,
+    });
+    await unlockStoredReport({
+      reportId: body.reportId || "",
+      facing,
+      year,
+      chart: reading.chart,
+      gua: reading.gua,
+      remedy: reading.remedy,
+    });
+    return NextResponse.json({ bypass: true, ...reading });
   }
 
   const origin = new URL(request.url).origin;
@@ -55,6 +69,7 @@ export async function POST(request: Request) {
       gender: body.gender || "",
       auditType: body.auditType || "",
       reportId: body.reportId || "",
+      locale: body.locale === "zh-Hant" ? "zh-Hant" : "en",
     },
   });
 

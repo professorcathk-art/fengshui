@@ -3,6 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { StarGrid } from "@/components/star-grid";
 import type { FormSchool } from "@/lib/ai/form-school";
 import type { FlyingStarChart } from "@/lib/fengshui/flying-star";
+import { getLocale } from "@/lib/i18n/server";
 import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -30,6 +31,7 @@ export default async function SavedReportPage({ params }: { params: { id: string
     .maybeSingle();
 
   if (!audit) notFound();
+  const locale = getLocale();
 
   const { data: report } = await supabase
     .from("reports")
@@ -82,7 +84,7 @@ export default async function SavedReportPage({ params }: { params: { id: string
 
       {chart ? (
         <section className="space-y-6">
-          <StarGrid chart={chart} />
+          <StarGrid chart={chart} locale={locale} />
           {report?.remedy_text ? (
             <div className="whitespace-pre-wrap text-sm leading-7">{report.remedy_text}</div>
           ) : null}
