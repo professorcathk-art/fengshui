@@ -4,6 +4,7 @@ export async function deepseekChat(input: {
   system: string;
   userText: string;
   imageDataUrl?: string;
+  maxTokens?: number;
 }) {
   const key = process.env.DEEPSEEK_API_KEY;
   if (!key) throw new Error("DEEPSEEK_API_KEY is not set.");
@@ -32,6 +33,7 @@ export async function deepseekChat(input: {
       ],
       response_format: { type: "json_object" },
       thinking: { type: "disabled" },
+      max_tokens: input.maxTokens ?? 1200,
     }),
   });
 

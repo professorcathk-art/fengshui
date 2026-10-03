@@ -69,8 +69,8 @@ export function StarGrid({
       </div>
       <p className="text-xs text-muted-foreground">
         {locale === "zh-Hant"
-          ? `每宮依次是山星、運星、向星。北在上方。坐 ${chart.sitting.pinyin} ${chart.sitting.character}。山星${chart.mountainFliesForward ? "順" : "逆"}飛，向星${chart.waterFliesForward ? "順" : "逆"}飛。`
-          : `Each palace reads mountain star, period star, water star. North is at the top. Sitting ${chart.sitting.pinyin} ${chart.sitting.character}. Mountain stars fly ${chart.mountainFliesForward ? "forward" : "backward"}; water stars fly ${chart.waterFliesForward ? "forward" : "backward"}.`}
+          ? "上面的文章才是給人讀的。這張九宮格是計算底稿：每一格三個數字，依序是人、時代、錢和訪客。北在上方。看不懂數字也不影響上面的說明。"
+          : "The essay is the part to read. This grid is the worksheet behind it: three numbers in each square, for the people, the era, then money and visitors. North is at the top. You can follow the writing without the numbers."}
       </p>
     </div>
   );

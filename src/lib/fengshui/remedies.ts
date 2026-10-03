@@ -38,23 +38,31 @@ function sectorName(sector: string, locale: Locale) {
 function remedyFor(star: number, sector: string, locale: Locale) {
   const place = sectorName(sector, locale);
   if (locale === "zh-Hant") {
-    if (star === 5) return `在${place}放金屬鳴鐘，以洩五黃土星。此處宜靜、宜明，不要堆雜物。`;
-    if (star === 2) return `在${place}放金屬，例如銅磬或六枚銅錢，以洩二黑土星。二黑未化時，不要頭朝這個方向睡覺。`;
-    if (star === 3) return `用穩定的燈或一小件紅色物件化${place}的三碧木星。移走尖角，也移走容易爭執的書桌。`;
-    if (star === 7) return `用深色碗盛靜水，並經常更換，以洩${place}的七赤金星。保險箱和臥室盡量不要放在這裡。`;
+    if (star === 5) {
+      return `${place}容易出事、計畫卡住。這裡放一個金屬時鐘，保持明亮，不要堆東西，也不要在這裡睡覺。`;
+    }
+    if (star === 2) {
+      return `${place}跟身體不舒服、提不起勁有關。放金屬，例如銅碗或六枚銅錢。頭不要朝這個方向睡。`;
+    }
+    if (star === 3) {
+      return `${place}容易吵架、決定下得太急。用一盞穩定的燈，把尖角和會讓人對立的座位移走。`;
+    }
+    if (star === 7) {
+      return `${place}容易有閒話、東西壞掉、錢不知不覺漏掉。放一碗經常更換的清水。保險箱和床盡量不要放這裡。`;
+    }
     return null;
   }
   if (star === 5) {
-    return `Place a metal chiming clock in the ${place} sector to exhaust the #5 Yellow Earth star. Keep this area quiet, bright, and free of clutter.`;
+    return `The ${place.toLowerCase()} side is where plans stall and accidents show up. Keep it bright and empty, put a metal clock there, and do not sleep in that part of the room.`;
   }
   if (star === 2) {
-    return `Place metal in the ${place} — a brass singing bowl or six coins — to exhaust the #2 Black Earth star. Do not sleep with your head toward an untreated #2.`;
+    return `The ${place.toLowerCase()} side is tied to feeling unwell or run down. A metal bowl or six coins helps. Do not sleep with your head pointing that way.`;
   }
   if (star === 3) {
-    return `Soften the #3 Jade Wood star in the ${place} with a steady lamp or a small red object. Remove sharp corners and argument-prone desks from this sector.`;
+    return `The ${place.toLowerCase()} side is where arguments and rushed decisions start. Use a steady lamp, and move sharp corners and face-to-face desks out of it.`;
   }
   if (star === 7) {
-    return `Exhaust the #7 Red Metal star in the ${place} with still water in a dark bowl, refreshed often. Avoid this sector for a safe or a bedroom if it can be moved.`;
+    return `The ${place.toLowerCase()} side is where gossip, broken things, and money leaks show up. Keep a bowl of still water there and change it often. Do not put a safe or a bed on that side if you can help it.`;
   }
   return null;
 }
@@ -73,31 +81,39 @@ export function palaceRemedies(chart: FlyingStarChart, locale: Locale = "en") {
 }
 
 export function remedyText(chart: FlyingStarChart, gua: LifeGua | null, locale: Locale = "en") {
+  const front = sectorName(
+    chart.palaces.find((palace) => palace.id === chart.facing.palace)?.direction ?? "",
+    locale,
+  );
+  const back = sectorName(
+    chart.palaces.find((palace) => palace.id === chart.sitting.palace)?.direction ?? "",
+    locale,
+  );
   const lines =
     locale === "zh-Hant"
       ? [
-          `${chart.period} 運飛星盤。向首 ${chart.facing.pinyin} ${chart.facing.character}（${chart.facing.ring === "Earth" ? "地盤" : chart.facing.ring === "Heaven" ? "天盤" : "人盤"}），坐山 ${chart.sitting.pinyin} ${chart.sitting.character}。`,
+          `這棟建築落在第 ${chart.period} 個二十年。正門朝${front}，背面在${back}。`,
           chart.kind === "double-facing"
-            ? "兩顆當令星都到向。門前宜開揚明亮，屋後要有實山托住。"
+            ? "對生意和名聲有幫助的力量，都堆在正門這一側。外面會顯得熱鬧，裡面的人卻比較沒有被照顧到。屋後最好有實牆或高一點的依靠，不要背後空空的。"
             : chart.kind === "double-sitting"
-              ? "兩顆當令星都到坐。人丁有依，向首則需要動水或活躍的來路。"
+              ? "對人有幫助的力量在屋後。團隊比較留得住，可是客人、訂單和名聲要靠正門外面有路、有人來。如果門前很靜，事情會悶在裡面。"
               : chart.kind === "wang-shan-wang-shui"
-                ? "這是旺山旺水：當令山星在後，當令向星在前。"
+                ? "人在後面有依靠，機會在前面進來。這是比較順的格局。擴張可以，但來的路不要正對尖角。"
                 : chart.kind === "shang-shan-xia-shui"
-                  ? "這是上山下水：當令之星顛倒。門外的形，比屋內的物件更要緊。"
-                  : "沒有單一的特殊格局。凶星要逐宮化解。",
+                  ? "外面越熱鬧，裡面的人越容易散。短期會有聲量，長期班底不穩。這時候先顧住留下來的人，比再加一個很亮的門面重要。"
+                  : "整棟樓沒有一個統一的好格局。每一面各自不同，不要指望所有部門一起變好。",
         ]
       : [
-          `Period ${chart.period} chart. Facing ${chart.facing.pinyin} ${chart.facing.character} (${chart.facing.ring}), sitting ${chart.sitting.pinyin} ${chart.sitting.character}.`,
+          `The year puts this building in era ${chart.period}, one of the twenty-year chapters this system uses. The front faces ${front.toLowerCase()}. The back is ${back.toLowerCase()}.`,
           chart.kind === "double-facing"
-            ? "Both timely stars gather at the facing. Favour an open, bright approach and a solid support behind the building."
+            ? "The helpful pressure for reputation and incoming work is piled up at the front door. The outside can look busy while the people inside are thinly supported. Give the back of the building something solid behind it."
             : chart.kind === "double-sitting"
-              ? "Both timely stars gather at the sitting. People are supported here; the facing wants active water or a lively approach."
+              ? "The helpful pressure sits with the people at the back, so a team can hold. Customers and reputation still need a lively way in at the front. A quiet door keeps the work private."
               : chart.kind === "wang-shan-wang-shui"
-                ? "This is a Wang Shan Wang Shui chart: the timely mountain star sits behind and the timely water star faces out."
+                ? "People are supported at the back, and opportunity arrives at the front. That is the easier pattern. Growth is reasonable if the road in is not aimed at a sharp corner."
                 : chart.kind === "shang-shan-xia-shui"
-                  ? "This is Shang Shan Xia Shui: the timely stars are reversed. Form outside the door matters more than objects inside."
-                  : "No single special structure dominates. Remedy the hostile stars palace by palace.",
+                  ? "The louder the outside gets, the easier it is to lose the people who keep the place going. It can make a short splash and a thin staff. Hold the team before you add another bright front."
+                  : "The building does not have one pattern. Each side tells its own story, so do not expect every room to improve together.",
         ];
 
   for (const item of palaceRemedies(chart, locale)) {

@@ -54,6 +54,18 @@ export default async function SavedReportPage({ params }: { params: { id: string
         </p>
       </div>
 
+      {form?.reading ? (
+        <div className="max-w-3xl space-y-4 text-sm leading-7">
+          {form.reading
+            .split(/\n+/)
+            .map((paragraph) => paragraph.trim())
+            .filter(Boolean)
+            .map((paragraph, index) => (
+              <p key={index}>{paragraph}</p>
+            ))}
+        </div>
+      ) : null}
+
       {form ? (
         <section className="grid gap-4 md:grid-cols-2">
           <article className="rounded-2xl border border-border p-5 text-sm">

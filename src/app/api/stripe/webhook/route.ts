@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
 import { stripeSecret } from "@/lib/billing";
-import { paidReading, unlockStoredReport } from "@/lib/reports/unlock";
+import { narratedPaidReading, unlockStoredReport } from "@/lib/reports/unlock";
 
 export const runtime = "nodejs";
+export const maxDuration = 60;
 export const dynamic = "force-dynamic";
 
 export async function POST(request: Request) {
@@ -28,12 +29,13 @@ export async function POST(request: Request) {
     if (session.payment_status === "paid" && session.metadata?.reportId) {
       const facing = Number(session.metadata.facing);
       const year = Number(session.metadata.year);
-      const reading = paidReading({
+      const reading = await narratedPaidReading({
         facing,
         year,
         dob: session.metadata.dob,
         gender: session.metadata.gender,
         locale: session.metadata.locale,
+        place: session.metadata.address,
       });
       await unlockStoredReport({
         reportId: session.metadata.reportId,

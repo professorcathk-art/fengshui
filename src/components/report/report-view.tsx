@@ -3,7 +3,9 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useLocale } from "@/components/locale-provider";
+import { ReadingBlocks } from "@/components/reading-blocks";
 import { StarGrid } from "@/components/star-grid";
+import type { PlainReading } from "@/lib/ai/narrate";
 import { REPORT_PRICE_LABEL } from "@/lib/pricing";
 import type { Locale } from "@/lib/i18n/dictionary";
 import type { FormSchool } from "@/lib/ai/form-school";
@@ -38,6 +40,7 @@ export function ReportView({
   const [paid, setPaid] = useState<{
     chart: FlyingStarChart;
     remedy: string;
+    narrative: PlainReading | null;
     gua: LifeGua | null;
   } | null>(null);
   const [message, setMessage] = useState<string | null>(null);
@@ -56,6 +59,7 @@ export function ReportView({
       const payload = (await response.json()) as {
         chart?: FlyingStarChart;
         remedy?: string;
+        narrative?: PlainReading | null;
         gua?: LifeGua | null;
         error?: string;
       };
@@ -64,7 +68,12 @@ export function ReportView({
         setMessage(payload.error || "The payment could not be confirmed.");
         return;
       }
-      setPaid({ chart: payload.chart, remedy: payload.remedy, gua: payload.gua ?? null });
+      setPaid({
+        chart: payload.chart,
+        remedy: payload.remedy,
+        narrative: payload.narrative ?? null,
+        gua: payload.gua ?? null,
+      });
     })();
     return () => {
       cancelled = true;
@@ -85,6 +94,11 @@ export function ReportView({
         auditType: initial.auditType,
         reportId: initial.reportId,
         locale: resultLocale,
+        address: initial.address,
+        notes: [initial.formSchool.reading, ...initial.formSchool.identified_features]
+          .filter(Boolean)
+          .join("\n")
+          .slice(0, 1500),
       }),
     });
     const payload = (await response.json()) as {
@@ -93,11 +107,17 @@ export function ReportView({
       bypass?: boolean;
       chart?: FlyingStarChart;
       remedy?: string;
+      narrative?: PlainReading | null;
       gua?: LifeGua | null;
     };
     setPending(false);
     if (payload.bypass && payload.chart && payload.remedy) {
-      setPaid({ chart: payload.chart, remedy: payload.remedy, gua: payload.gua ?? null });
+      setPaid({
+        chart: payload.chart,
+        remedy: payload.remedy,
+        narrative: payload.narrative ?? null,
+        gua: payload.gua ?? null,
+      });
       setMessage(
         zh
           ? "Stripe 尚未接上，所以這次沒有收款，飛星盤已打開。"
@@ -120,14 +140,28 @@ export function ReportView({
         </p>
         <h1 className="mt-2 font-display text-5xl">{zh ? `結構分數 ${score}` : `Structural score ${score}`}</h1>
         <p className="mt-3 max-w-2xl text-muted-foreground">
-          {zh ? `${initial.period} 運，向 ${initial.facingDegree}°。` : `Period ${initial.period}, facing ${initial.facingDegree}°. `}
-          {initial.address ? initial.address : zh ? "圖像審計。" : "Image audit."}
+          {zh ? `以 ${initial.yearBuilt} 年、朝向 ${initial.facingDegree}° 來讀。` : `Read from ${initial.yearBuilt}, facing ${initial.facingDegree}°. `}
+          {initial.address ? initial.address : zh ? "這次用的是上傳的圖。" : "This one uses the picture you uploaded."}
         </p>
       </div>
 
+      {initial.formSchool.reading ? (
+        <div className="max-w-3xl space-y-4 text-sm leading-7">
+          {initial.formSchool.reading
+            .split(/\n+/)
+            .map((paragraph) => paragraph.trim())
+            .filter(Boolean)
+            .map((paragraph, index) => (
+              <p key={index}>{paragraph}</p>
+            ))}
+        </div>
+      ) : null}
+
       <section className="grid gap-4 md:grid-cols-2">
         <article className="rounded-2xl border border-border p-5">
-          <h2 className="text-sm tracking-wide text-muted-foreground uppercase">{zh ? "可見的形" : "What is visible"}</h2>
+          <h2 className="text-sm tracking-wide text-muted-foreground uppercase">
+            {zh ? "看得到的情況" : "What we can see"}
+          </h2>
           <ul className="mt-3 space-y-2 text-sm">
             {initial.formSchool.identified_features.map((item, index) => (
               <li key={`${index}-${item}`}>{item}</li>
@@ -135,7 +169,9 @@ export function ReportView({
           </ul>
         </article>
         <article className="rounded-2xl border border-destructive/40 p-5">
-          <h2 className="text-sm tracking-wide text-muted-foreground uppercase">{zh ? "煞氣" : "Sha Qi"}</h2>
+          <h2 className="text-sm tracking-wide text-muted-foreground uppercase">
+            {zh ? "需要留意的問題" : "What to watch"}
+          </h2>
           <ul className="mt-3 space-y-2 text-sm">
             {initial.formSchool.negative_energies.map((item, index) => (
               <li key={`${index}-${item}`}>{item}</li>
@@ -159,9 +195,20 @@ export function ReportView({
       ) : null}
 
       {paid ? (
-        <section className="space-y-6 rounded-2xl border border-gold/40 p-5">
+        <section className="space-y-8 rounded-2xl border border-gold/40 p-5">
+          {paid.narrative ? (
+            <ReadingBlocks
+              sections={[
+                { title: resultLocale === "zh-Hant" ? "建築本身" : "The building", body: paid.narrative.building },
+                { title: resultLocale === "zh-Hant" ? "裡面的人" : "The people inside", body: paid.narrative.people },
+                { title: resultLocale === "zh-Hant" ? "生意與名聲" : "Money and reputation", body: paid.narrative.outlook },
+                { title: resultLocale === "zh-Hant" ? "可以怎麼做" : "What to do", body: paid.narrative.whatToDo },
+              ]}
+            />
+          ) : (
+            <div className="max-w-3xl whitespace-pre-wrap text-sm leading-7">{paid.remedy}</div>
+          )}
           <StarGrid chart={paid.chart} locale={resultLocale} />
-          <div className="whitespace-pre-wrap text-sm leading-7 text-foreground/90">{paid.remedy}</div>
         </section>
       ) : (
         <section className="rounded-2xl border border-gold/40 bg-gold/5 p-6">
@@ -177,8 +224,8 @@ export function ReportView({
           <Button className="mt-5" disabled={pending} onClick={() => void unlock()} type="button">
             {pending
               ? zh
-                ? "正在打開"
-                : "Opening checkout"
+                ? "正在寫這份解讀"
+                : "Writing the reading"
               : zh
                 ? `以 ${REPORT_PRICE_LABEL} 解鎖`
                 : `Unlock for ${REPORT_PRICE_LABEL}`}

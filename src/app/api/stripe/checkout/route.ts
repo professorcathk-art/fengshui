@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
 import { REPORT_PRICE_CENTS, stripeSecret } from "@/lib/billing";
-import { paidReading, unlockStoredReport } from "@/lib/reports/unlock";
+import { narratedPaidReading, unlockStoredReport } from "@/lib/reports/unlock";
 
 export const runtime = "nodejs";
+export const maxDuration = 60;
 export const dynamic = "force-dynamic";
 
 export async function POST(request: Request) {
@@ -15,6 +16,8 @@ export async function POST(request: Request) {
     auditType?: string;
     reportId?: string;
     locale?: string;
+    address?: string;
+    notes?: string;
   };
 
   const facing = Number(body.facingDegree);
@@ -25,12 +28,15 @@ export async function POST(request: Request) {
 
   const secret = stripeSecret();
   if (!secret) {
-    const reading = paidReading({
+    const reading = await narratedPaidReading({
       facing,
       year,
       dob: body.dob,
       gender: body.gender,
       locale: body.locale,
+      place: body.address,
+      notes: body.notes,
+      subject: body.address || body.auditType,
     });
     await unlockStoredReport({
       reportId: body.reportId || "",
@@ -70,6 +76,7 @@ export async function POST(request: Request) {
       auditType: body.auditType || "",
       reportId: body.reportId || "",
       locale: body.locale === "zh-Hant" ? "zh-Hant" : "en",
+      address: (body.address || "").slice(0, 200),
     },
   });
 

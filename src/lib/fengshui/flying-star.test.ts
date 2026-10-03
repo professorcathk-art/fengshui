@@ -36,7 +36,7 @@ test("period 8 facing due south is the published double-facing chart", () => {
 test("traditional Chinese remedies name the five yellow star", () => {
   const chart = flyingStar({ period: 8, facingDegree: 180 });
   const text = remedyText(chart, null, "zh-Hant");
-  assert.match(text, /五黃/);
+  assert.match(text, /容易出事/);
   assert.doesNotMatch(text, /\$/);
 });
 
